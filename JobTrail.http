@@ -1,0 +1,6 @@
+@JobTrail_HostAddress = http://localhost:5111
+
+GET {{JobTrail_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
