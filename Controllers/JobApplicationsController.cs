@@ -1,4 +1,5 @@
 using JobTrail.DTOs;
+using JobTrail.Interfaces;
 using JobTrail.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,30 +9,34 @@ namespace JobTrail.Controllers;
 [Route("api/v1/[controller]")]
 public class JobApplicationsController : ControllerBase
 {
-    private static readonly List<JobApplication> _applications = new();
-    private static int _nextId = 1;
+    private readonly IJobApplicationRepository _repository;
+    
+    public JobApplicationsController(IJobApplicationRepository repository)
+    {
+        _repository = repository;
+    }
     
     [HttpGet]
-    public ActionResult<IEnumerable<JobApplicationResponseDto>> GetAll()
+    public async Task<ActionResult<IEnumerable<JobApplicationResponseDto>>> GetAll()
     {
-        var result = _applications.Select(MapToResponse);
-        return Ok(result);
+        var application = await _repository.GetAllAsync();
+        return Ok(application.Select(MapToResponse));
     }
 
     [HttpGet("{id}")]
-    public ActionResult<JobApplicationResponseDto> GetById(int id)
+    public async Task<ActionResult<JobApplicationResponseDto>> GetById(int id)
     {
-        var application = _applications.FirstOrDefault(x => x.Id == id);
+        var application = await _repository.GetByIdAsync(id);
         if (application is null) return NotFound();
         return Ok(MapToResponse(application));
     }
 
     [HttpPost]
-    public ActionResult<JobApplicationResponseDto> Create([FromBody] JobApplicationRequestDto request)
+    public async Task<ActionResult<JobApplicationResponseDto>> Create([FromBody] JobApplicationRequestDto request)
     {
         var application = new JobApplication
         {
-            Id = _nextId++,
+           
             Name = request.Name,
             Title = request.Title,
             Description = request.Description ?? string.Empty,
@@ -39,39 +44,26 @@ public class JobApplicationsController : ControllerBase
             Notes = request.Notes ?? string.Empty,
             AppliedOn = request.AppliedOn,
             Status = request.Status ?? ApplicationStatus.Saved,
-            CreatedOn = DateTime.UtcNow,
-            UpdatedOn = DateTime.UtcNow,
         };
 
-        _applications.Add(application);
-        return CreatedAtAction(nameof(GetById), new { id = application.Id }, MapToResponse(application));
+        var created = await _repository.CreateAsync(application);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponse(created));
     }
 
     [HttpPut("{id}")]
-    public ActionResult<JobApplicationResponseDto> Update(int id, [FromBody] JobApplicationRequestDto request)
+    public async Task<ActionResult<JobApplicationResponseDto>> Update(int id, [FromBody] JobApplicationRequestDto request)
     {
-        var application = _applications.FirstOrDefault(x => x.Id == id);
-        if (application is null) return NotFound();
-
-        application.Name = request.Name;
-        application.Title = request.Title;
-        application.Description = request.Description ?? string.Empty;
-        application.Url = request.Url ?? string.Empty;
-        application.Notes = request.Notes ?? string.Empty;
-        application.AppliedOn = request.AppliedOn;
-        application.Status = request.Status ?? application.Status;
-        application.UpdatedOn = DateTime.UtcNow;
-
-        return Ok(MapToResponse(application));
+        var updated = await _repository.UpdateAsync(id, request);
+        if (updated is null) return NotFound();
+        return Ok(MapToResponse(updated));
     }
-    
+
     [HttpDelete("{id}")]
-    public ActionResult<JobApplicationResponseDto> Delete(int id)
+    public async Task<ActionResult<JobApplicationResponseDto>> Delete(int id)
     {
-        var application = _applications.FirstOrDefault(x => x.Id == id);
-        if (application is null) return NotFound();
-        _applications.Remove(application);
-        return Ok(MapToResponse(application));
+        var result = await _repository.DeleteAsync(id);
+        if (!result) return NotFound();
+        return NoContent();
     }
 
     private static JobApplicationResponseDto MapToResponse(JobApplication application)
