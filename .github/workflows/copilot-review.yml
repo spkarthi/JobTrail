@@ -1,18 +1,22 @@
-name: Copilot PR Review
+name: PR Review Automation
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created]
 
 jobs:
-  copilot-review:
+  pr-review:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
+      issues: write
+      pull-requests: write
 
     steps:
-      - name: Request Copilot Review
-        uses: github/copilot-review-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run PR Agent Review
+        uses: Codium-ai/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
