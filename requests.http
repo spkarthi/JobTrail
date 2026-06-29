@@ -1,0 +1,34 @@
+### Register
+POST http://localhost:5111/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "karthik@test.com",
+  "password": "Test1234!",
+  "confirmPassword": "Test1234!"
+}
+
+### Login
+POST http://localhost:5111/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "karthik@test.com",
+  "password": "Test1234!"
+}
+
+### Refresh
+POST http://localhost:5111/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "PASTE_REFRESH_TOKEN_HERE"
+}
+
+### Revoke
+POST http://localhost:5111/api/v1/auth/revoke
+Authorization: Bearer PASTE_ACCESS_TOKEN_HERE
+
+### Get Job Applications
+GET http://localhost:5111/api/v1/jobapplications
+Authorization: Bearer PASTE_ACCESS_TOKEN_HERE
